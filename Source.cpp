@@ -37,9 +37,9 @@ public:
 		{
 			return ptr->value;
 		}
-		T& operator->()
+		T* operator->()
 		{
-			return ptr->value;
+			return &ptr->value;
 		}
 		Iterator& operator++()
 		{
@@ -65,13 +65,13 @@ public:
 		{
 			this->ptr = node;
 		}
-		T& operator*() const
+		const T& operator*() const
 		{
 			return ptr->value;
 		}
-		T& operator->() const
+		const T* operator->() const
 		{
-			return ptr->value;
+			return &ptr->value;
 		}
 		ConstIterator& operator++()
 		{
@@ -82,10 +82,7 @@ public:
 		{
 			return ptr != other.ptr;
 		}
-		bool operator==(const ConstIterator& other) const
-		{
-			return ptr != other.ptr;
-		}
+	
 		friend class List;
 
 	};
@@ -139,10 +136,7 @@ public:
 	}
 	List& operator=(std::initializer_list<T> other)
 	{
-		if (this == other)
-		{
-			return;
-		}
+
 		clear();
 
 		for (auto& value : other)
@@ -162,7 +156,7 @@ public:
 			head = head->next;
 			delete current;
 
-			return new Iterator(head);
+			return Iterator(head);
 		}
 		Node* cur = head;
 		while (cur->next != it.ptr)
@@ -184,7 +178,7 @@ public:
 			newNode->next = head;
 			head = newNode;
 			size++;
-			return new Iterator(head);
+			return Iterator(head);
 		}
 		Node* cur = head;
 		while (cur->next != it.ptr)
@@ -195,7 +189,7 @@ public:
 		cur->next = newNode;;
 
 		size++;
-		return new Iterator(newNode);
+		return Iterator(newNode);
 	}
 
 	List(const List& other)
@@ -369,7 +363,7 @@ public:
 	}
 	void print1()
 	{
-		for (auto it = begin(); it != end; ++it)
+		for (auto it = begin(); it != end(); ++it)
 		{
 			std::cout << *it << std::endl;
 		}
@@ -402,9 +396,9 @@ public:
 			n2 = n2->next;
 		}
 
-		Node* time = n1->value;
+		T time = n1->value;
 		n1->value = n2->value;
-		n2->value = time->value;
+		n2->value = time;
 
 
 	}
@@ -416,6 +410,7 @@ public:
 			head = head->next;
 			delete cur;
 			size--;
+			return;
 		}
 		Node* h = head;
 		for (int i = 0; i < index - 1; i++)
@@ -479,7 +474,7 @@ public:
 	}
 	void destroy_all_element(T value)
 	{
-		while (head->value == value)
+		while (head && head->value == value)
 		{
 			Node* temp = head;
 			head = head->next;
@@ -516,7 +511,7 @@ public:
 			p2 = n2;
 			n2 = n2->next;
 		}
-		if (prev1)
+		if (p1)
 		{
 			p1->next = n2;
 		}
@@ -561,7 +556,15 @@ public:
 			delete temp;
 			size--;
 		}
+		if (prev)
+		{
 			prev->next = after;
+		}
+		else
+		{
+			head = after;
+		}
+			
 
 	}
 	template <typename Predicate>
@@ -631,11 +634,13 @@ public:
 	}
 	void splice(int index, List& other)
 	{
+
 		Node* current = head;
 		for (int i = 0; i < index - 1; i++)
 		{
 			current = current->next;
 		}
+		if (!other.head) return;
 		Node* tail = other.head;
 		while (tail->next)
 		{
@@ -648,14 +653,11 @@ public:
 		other.head = nullptr;
 		other.size = 0;
 	}
-	void merge(List& other)
+	Node* merge(Node* a, Node* b)
 	{
 		Node dummy(0);
-		Node tail = &dummy;
+		Node* tail = &dummy;
 
-		Node* a = head;
-		Node* b = other.head;
-		
 		while (a && b)
 		{
 			if (a->value < b->value)
@@ -668,26 +670,26 @@ public:
 				tail->next = b;
 				b = b->next;
 			}
+			tail = tail->next; // ❗ ВАЖНО
 		}
-		tail = (a ? a : b);
-		head = dummy.next;
 
-		other.head = nullptr;
-		other.size = 0;
+		tail->next = (a ? a : b);
+
+		return dummy.next;
 	}
 	void split(Node* head, Node*& left, Node*& right)
 	{
 		Node* first = head;
 		Node* second = head->next;
 
-		while (second->next)
+		while (second && second->next)
 		{
 			first = first->next;
 			second = second->next->next;
 		}
 		left = head;
-		right = slow->next;
-		slow->next = nullptr;
+		right = first->next;
+		first->next = nullptr;
 	}
 	Node* mergeSort(Node* node)
 	{
